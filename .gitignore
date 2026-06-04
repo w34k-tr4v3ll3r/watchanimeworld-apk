@@ -10,6 +10,7 @@ build/
 *.iws
 *.ipr
 *.apk
+*.aar
 
 # Local environment
 local.properties
@@ -25,3 +26,5 @@ local.properties
 # Build outputs
 app/build/
 *.log
+bin/
+out/
