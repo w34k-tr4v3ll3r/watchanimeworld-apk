@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:color="@color/purple_500"/>
-    <foreground>
-        <vector xmlns:android="http://schemas.android.com/apk/res/android"
-            android:width="108dp"
-            android:height="108dp"
-            android:viewportWidth="108"
-            android:viewportHeight="108">
-            <path android:fillColor="@color/white"
-                android:pathData="M54,9C32.34,9 15,26.34 15,48C15,69.66 32.34,87 54,87C75.66,87 93,69.66 93,48C93,26.34 75.66,9 54,9ZM54,81C36.33,81 22,66.67 22,48C22,29.33 36.33,15 54,15C71.67,15 86,29.33 86,48C86,66.67 71.67,81 54,81ZM54,33C48.48,33 44,37.48 44,43C44,48.52 48.48,53 54,53C59.52,53 64,48.52 64,43C64,37.48 59.52,33 54,33Z"/>
-        </vector>
-    </foreground>
-</adaptive-icon>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/purple_500" />
+</shape>
