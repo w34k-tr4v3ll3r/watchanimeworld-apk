@@ -20,14 +20,23 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 33
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
     - name: Build with Gradle
-      run: java -version && gradle --version && gradle build
+      run: ./gradlew build -x lint
 
     - name: Build APK
-      run: gradle assembleDebug
+      run: ./gradlew assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/
