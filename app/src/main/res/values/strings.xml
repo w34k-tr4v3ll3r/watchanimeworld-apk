@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Watch Anime World</string>
+    <string name="loading">Loading...</string>
+    <string name="error_loading">Error loading page</string>
+    <string name="no_internet">Please check your internet connection</string>
 </resources>

@@ -24,3 +24,4 @@ local.properties
 
 # Build outputs
 app/build/
+*.log
