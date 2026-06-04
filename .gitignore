@@ -1,0 +1,26 @@
+# Gradle files
+.gradle/
+build/
+*.jks
+*.keystore
+
+# Android Studio
+.idea/
+*.iml
+*.iws
+*.ipr
+*.apk
+
+# Local environment
+local.properties
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# Build outputs
+app/build/
