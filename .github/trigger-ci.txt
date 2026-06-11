@@ -1,0 +1,3 @@
+Trigger workflow: no-op commit to start CI run
+
+This file was added to trigger the Android CI workflow on branch adblock-js-injection.
