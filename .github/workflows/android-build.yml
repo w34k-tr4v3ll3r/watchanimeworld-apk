@@ -35,14 +35,20 @@ jobs:
         run: |
           if [ -f ./gradlew ]; then chmod +x ./gradlew; fi
 
-      - name: Install Gradle distribution
+      - name: Install Gradle (SDKMAN)
+        env:
+          GRADLE_VERSION: 8.4.1
         run: |
-          set -e
-          GRADLE_VERSION=8.4.1
-          echo "Downloading Gradle ${GRADLE_VERSION}..."
-          curl -sSLo gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
-          unzip -q gradle.zip -d /opt/gradle
-          echo "/opt/gradle/gradle-${GRADLE_VERSION}/bin" >> $GITHUB_PATH
+          set -euo pipefail
+          echo "Installing Gradle ${GRADLE_VERSION} via SDKMAN..."
+          curl -s "https://get.sdkman.io" | bash
+          # shellcheck disable=SC1091
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install gradle ${GRADLE_VERSION}
+          echo "$HOME/.sdkman/candidates/gradle/${GRADLE_VERSION}/bin" >> $GITHUB_PATH
+
+      - name: Verify gradle
+        run: gradle --version
 
       - name: Build debug APK
         run: gradle assembleDebug --no-daemon --stacktrace
