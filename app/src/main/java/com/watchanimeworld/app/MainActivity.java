@@ -18,6 +18,7 @@ import android.os.Message;
 import android.content.Intent;
 import android.net.Uri;
 import java.io.ByteArrayInputStream;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,6 +31,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         webView = findViewById(R.id.webview);
+
+        // Initialize AdGuard manager (stub). When AdGuard SDK is configured this enables blocking.
+        AdGuardManager.initialize(this);
 
         // Check internet connectivity
         if (!isInternetConnected()) {
@@ -76,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
                 return handleUrl(view, url);
             }
@@ -109,6 +113,15 @@ public class MainActivity extends AppCompatActivity {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 try {
                     String url = request.getUrl().toString();
+                    Map<String, String> headers = request.getRequestHeaders();
+
+                    // First ask AdGuardManager (when real SDK is integrated this will consult blocklists)
+                    if (AdGuardManager.shouldBlockRequest(url, headers)) {
+                        return new WebResourceResponse("text/plain", "utf-8",
+                                new ByteArrayInputStream("".getBytes()));
+                    }
+
+                    // Fallback lightweight heuristic blocking
                     if (isAdUrl(url)) {
                         return new WebResourceResponse("text/plain", "utf-8",
                                 new ByteArrayInputStream("".getBytes()));
@@ -134,6 +147,10 @@ public class MainActivity extends AppCompatActivity {
                         "})();";
 
                 view.evaluateJavascript(js, null);
+
+                // Continuous protection: use MutationObserver to remove dynamically added ad elements
+                String mo = "(function(){try{var observer=new MutationObserver(function(m){m.forEach(function(r){r.addedNodes.forEach(function(n){if(n.querySelectorAll){['[class*=\\\"ad\\\"]','[id*=\\\"ad\\\"]','.advertisement','.banner','.popup','.modal'].forEach(function(s){if(n.matches&&n.matches(s))n.remove(); n.querySelectorAll&&n.querySelectorAll(s).forEach(function(el){el.remove();});});}});});});observer.observe(document,{childList:true,subtree:true});}catch(e){} })();";
+                view.evaluateJavascript(mo, null);
 
                 // Optional: run a second pass after a short delay to catch dynamically added elements
                 view.postDelayed(() -> view.evaluateJavascript(js, null), 1000);
