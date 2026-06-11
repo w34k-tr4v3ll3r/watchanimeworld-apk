@@ -45,18 +45,45 @@ jobs:
           GRADLE_VERSION: 8.4.1
         run: |
           set -euo pipefail
-          if [ -f ./gradlew ]; then
-            echo "Found gradlew; using project Gradle wrapper"
+
+          chmod +x ./gradlew || true
+
+          # Use wrapper if it exists and its JAR validates
+          if [ -x ./gradlew ] && [ -f ./gradle/wrapper/gradle-wrapper.jar ] && unzip -t ./gradle/wrapper/gradle-wrapper.jar >/dev/null 2>&1; then
+            echo "Found valid gradlew; using project Gradle wrapper"
             ./gradlew --version
             ./gradlew assembleDebug --no-daemon --stacktrace
+            exit 0
+          fi
+
+          echo "Gradle wrapper missing/invalid — attempting download fallback"
+
+          # Try download
+          if curl -fL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"; then
+            if unzip -q gradle.zip -d /opt/gradle; then
+              export PATH="/opt/gradle/gradle-${GRADLE_VERSION}/bin:$PATH"
+              rm -f gradle.zip
+              gradle --version
+              gradle assembleDebug --no-daemon --stacktrace
+              exit 0
+            else
+              echo "Downloaded Gradle zip is invalid or unzip failed"
+              rm -f gradle.zip
+            fi
           else
-            echo "No gradlew found; downloading Gradle ${GRADLE_VERSION} distribution"
-            curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
-            unzip -q gradle.zip -d /opt/gradle
-            export PATH=/opt/gradle/gradle-${GRADLE_VERSION}/bin:$PATH
+            echo "Gradle download failed"
+          fi
+
+          echo "Attempting apt fallback (may install older Gradle)."
+          sudo apt-get update -qq || true
+          if sudo apt-get install -y gradle; then
             gradle --version
             gradle assembleDebug --no-daemon --stacktrace
+            exit 0
           fi
+
+          echo "All Gradle bootstrap methods failed. Please ensure network access or commit a valid Gradle wrapper."
+          exit 2
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
