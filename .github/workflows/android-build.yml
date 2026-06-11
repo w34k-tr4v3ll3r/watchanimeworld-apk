@@ -35,16 +35,28 @@ jobs:
         run: |
           if [ -f ./gradlew ]; then chmod +x ./gradlew; fi
 
-      - name: Install Gradle via apt
+      - name: Ensure unzip and curl
         run: |
           sudo apt-get update
-          sudo apt-get install -y gradle
+          sudo apt-get install -y unzip curl
 
-      - name: Verify gradle
-        run: gradle --version
-
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon --stacktrace
+      - name: Use Gradle wrapper if present, otherwise download Gradle
+        env:
+          GRADLE_VERSION: 8.4.1
+        run: |
+          set -euo pipefail
+          if [ -f ./gradlew ]; then
+            echo "Found gradlew; using project Gradle wrapper"
+            ./gradlew --version
+            ./gradlew assembleDebug --no-daemon --stacktrace
+          else
+            echo "No gradlew found; downloading Gradle ${GRADLE_VERSION} distribution"
+            curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
+            unzip -q gradle.zip -d /opt/gradle
+            export PATH=/opt/gradle/gradle-${GRADLE_VERSION}/bin:$PATH
+            gradle --version
+            gradle assembleDebug --no-daemon --stacktrace
+          fi
 
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
