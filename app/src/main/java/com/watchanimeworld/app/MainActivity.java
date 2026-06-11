@@ -13,6 +13,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.graphics.Bitmap;
+import android.os.Message;
+import android.content.Intent;
+import android.net.Uri;
 import java.io.ByteArrayInputStream;
 
 public class MainActivity extends AppCompatActivity {
@@ -39,22 +43,65 @@ public class MainActivity extends AppCompatActivity {
         ws.setDomStorageEnabled(true);
         ws.setDatabaseEnabled(true);
         ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        ws.setJavaScriptCanOpenWindowsAutomatically(false); // prevent automatic popups
+        // Allow JS to open windows so onCreateWindow will be triggered; we'll capture them
+        ws.setJavaScriptCanOpenWindowsAutomatically(true);
 
-        // Prevent new windows/popups
+        // Intercept window.open / target="_blank" and load the URL in the same WebView
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, android.os.Message resultMsg) {
-                // Returning false prevents creating new windows (popups)
-                return false;
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                WebView popupWebView = new WebView(view.getContext());
+                popupWebView.getSettings().setJavaScriptEnabled(true);
+                popupWebView.setWebViewClient(new WebViewClient() {
+                    @Override
+                    public void onPageStarted(WebView wv, String url, Bitmap favicon) {
+                        // Load popup URL into the main WebView and destroy the temporary one
+                        webView.post(() -> webView.loadUrl(url));
+                        wv.destroy();
+                    }
+                });
+
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(popupWebView);
+                resultMsg.sendToTarget();
+                return true; // We handled the request (no new window will be shown)
             }
         });
 
-        // Set WebViewClient to handle page loading and lightweight ad blocking + JS injection
+        // Force most links to open in the app; block/handle non-http schemes explicitly
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
+                return handleUrl(view, url);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, android.webkit.WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                return handleUrl(view, url);
+            }
+
+            private boolean handleUrl(WebView view, String url) {
+                if (url == null) return false;
+
+                // Allow http(s) links to load inside the WebView
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    view.loadUrl(url);
+                    return true;
+                }
+
+                // Optionally handle other schemes you want to allow in external apps
+                if (url.startsWith("tel:") || url.startsWith("mailto:")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        // ignore if no app to handle
+                    }
+                    return true;
+                }
+
+                // Block everything else (prevents popup-like behavior for strange schemes)
                 return true;
             }
 
