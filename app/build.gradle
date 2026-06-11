@@ -1,3 +1,20 @@
+/*
+ * AdGuard SDK integration placeholder
+ *
+ * To enable the real AdGuard SDK, replace the placeholders below with the real
+ * repository and dependency coordinates from AdGuard and add your SDK key.
+ * Example (pseudo):
+ * repositories {
+ *     maven { url 'https://repo.adguard.com/maven' }
+ * }
+ *
+ * dependencies {
+ *     implementation 'com.adguard:adguard-sdk:VERSION'
+ * }
+ *
+ * See AdGuard SDK documentation for exact coordinates and initialization steps.
+ */
+
 plugins {
     id 'com.android.application'
 }
@@ -39,8 +56,15 @@ android {
     }
 }
 
+repositories {
+    // If you add AdGuard SDK, add their maven repo here per AdGuard instructions
+}
+
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.material:material:1.9.0'
+
+    // AdGuard SDK placeholder:
+    // implementation 'com.adguard:adguard-sdk:<version>'
 }
